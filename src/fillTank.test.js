@@ -92,4 +92,46 @@ describe('fillTank', () => {
 
     expect(customer.money).toBe(4870.13);
   });
+
+  it('discards fuel amount after the first decimal place', () => {
+    const customer = {
+      money: 268,
+      vehicle: {
+        maxTankCapacity: 50,
+        fuelRemains: 10,
+      },
+    };
+
+    fillTank(customer, 10.1);
+
+    expect(customer.vehicle.fuelRemains).toBe(36.5);
+  });
+
+  it('skips refueling if only less than 2 liters can fit', () => {
+    const customer = {
+      money: 1000,
+      vehicle: {
+        maxTankCapacity: 40,
+        fuelRemains: 38.1,
+      },
+    };
+
+    fillTank(customer, 10);
+
+    expect(customer.vehicle.fuelRemains).toBe(38.1);
+  });
+
+  it('rounds total fuel cost to nearest hundredth', () => {
+    const customer = {
+      money: 1000,
+      vehicle: {
+        maxTankCapacity: 40,
+        fuelRemains: 20,
+      },
+    };
+
+    fillTank(customer, 3.333, 3);
+
+    expect(customer.money).toBe(990);
+  });
 });
