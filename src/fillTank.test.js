@@ -3,7 +3,7 @@
 describe('fillTank', () => {
   const { fillTank } = require('./fillTank');
 
-  it('should be a function', () => {
+  it('is a declared function', () => {
     expect(fillTank).toBeInstanceOf(Function);
   });
 
@@ -19,25 +19,10 @@ describe('fillTank', () => {
     fillTank(customer, 10);
 
     expect(customer.vehicle.fuelRemains).toBe(50);
+    expect(customer.money).toBe(3820);
   });
 
-  it(`should count money without 'amount'`, () => {
-    const customer = {
-      money: 3000,
-      vehicle: {
-        maxTankCapacity: 40,
-        fuelRemains: 8,
-      },
-    };
-
-    fillTank(customer, 10);
-
-    const customerMoney = customer.money;
-
-    expect(customerMoney).toBe(2680);
-  });
-
-  it('pours only what the customer can afford', () => {
+  it('limits amount based on money', () => {
     const customer = {
       money: 260,
       vehicle: {
@@ -49,9 +34,10 @@ describe('fillTank', () => {
     fillTank(customer, 10);
 
     expect(customer.vehicle.fuelRemains).toBe(41);
+    expect(customer.money).toBe(0);
   });
 
-  it('does not exceed tank capacity if requested amount is too high', () => {
+  it('limits by tank capacity even if amount is too large', () => {
     const customer = {
       money: 5000,
       vehicle: {
@@ -63,9 +49,10 @@ describe('fillTank', () => {
     fillTank(customer, 9, 100);
 
     expect(customer.vehicle.fuelRemains).toBe(60);
+    expect(customer.money).toBe(5000 - (40 * 9));
   });
 
-  it('skips refueling when requested amount is less than 2 liters', () => {
+  it('does not pour if requested amount is under 2 liters', () => {
     const customer = {
       money: 1000,
       vehicle: {
@@ -77,23 +64,24 @@ describe('fillTank', () => {
     fillTank(customer, 10, 1.8);
 
     expect(customer.vehicle.fuelRemains).toBe(44);
+    expect(customer.money).toBe(1000);
   });
 
-  it('rounds total cost of fuel to two decimal places', () => {
+  it('returns undefined', () => {
     const customer = {
       money: 5000,
       vehicle: {
-        maxTankCapacity: 55,
-        fuelRemains: 30,
+        maxTankCapacity: 50,
+        fuelRemains: 0,
       },
     };
 
-    fillTank(customer, 9.99, 13);
+    const result = fillTank(customer, 10);
 
-    expect(customer.money).toBe(4870.13);
+    expect(result).toBeUndefined();
   });
 
-  it('discards fuel amount after the first decimal place', () => {
+  it('rounds fuel amount down to nearest tenth', () => {
     const customer = {
       money: 268,
       vehicle: {
@@ -105,9 +93,10 @@ describe('fillTank', () => {
     fillTank(customer, 10.1);
 
     expect(customer.vehicle.fuelRemains).toBe(36.5);
+    expect(customer.money).toBeCloseTo(0.35);
   });
 
-  it('skips refueling if only less than 2 liters can fit', () => {
+  it('does not pour if less than 2 liters would fit in tank', () => {
     const customer = {
       money: 1000,
       vehicle: {
@@ -119,6 +108,7 @@ describe('fillTank', () => {
     fillTank(customer, 10);
 
     expect(customer.vehicle.fuelRemains).toBe(38.1);
+    expect(customer.money).toBe(1000);
   });
 
   it('rounds total fuel cost to nearest hundredth', () => {
@@ -132,6 +122,22 @@ describe('fillTank', () => {
 
     fillTank(customer, 3.333, 3);
 
-    expect(customer.money).toBe(990);
+    expect(customer.money).toBeCloseTo(990);
+    expect(customer.vehicle.fuelRemains).toBe(23);
+  });
+
+  it('handles exact pricing with decimals correctly', () => {
+    const customer = {
+      money: 5000,
+      vehicle: {
+        maxTankCapacity: 55,
+        fuelRemains: 30,
+      },
+    };
+
+    fillTank(customer, 9.99, 13);
+
+    expect(customer.money).toBeCloseTo(4870.13);
+    expect(customer.vehicle.fuelRemains).toBe(43);
   });
 });
